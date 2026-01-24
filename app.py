@@ -10,7 +10,7 @@ st.write("Enter inputs and get a predicted energy production output.")
 
 @st.cache_resource
 def load_model():
-    return joblib.load("tuned_gradient_boosting_pipeline.joblib")
+    return joblib.load("best_energy_model.pkl")
 
 model = load_model()
 
