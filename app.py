@@ -9,6 +9,13 @@ st.set_page_config(page_title="Energy Production Predictor", page_icon="⚡")
 st.title("⚡ Energy Production Predictor")
 st.write("Select a source and a date/time to estimate energy production output.")
 
+if st.button("Clear cache"):
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.success("Cache cleared. Rerun the app now.")
+    st.stop()
+
+
 # -----------------------------
 # Load model
 # -----------------------------
@@ -24,7 +31,7 @@ model = load_model()
 @st.cache_data
 def load_lookup():
     lk = pd.read_parquet("feature_lookup.parquet")
-    lk["Date"] = pd.to_datetime(lk["Date"]).dt.date
+    lookup["Date"] = pd.to_datetime(lookup["Date"]).dt.date
     return lk
 
 lookup = load_lookup()
