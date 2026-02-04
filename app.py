@@ -28,6 +28,10 @@ def load_lookup():
     return lk
 
 lookup = load_lookup()
+st.write("Lookup columns:", list(lookup.columns))
+st.write("Lookup dtypes:", lookup.dtypes)
+st.write("Lookup sample:", lookup.head())
+
 sources = sorted(lookup["Source"].dropna().unique().tolist())
 
 # Optional: if you included Production in parquet, we can compute typical estimates from it
