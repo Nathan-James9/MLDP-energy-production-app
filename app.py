@@ -9,13 +9,6 @@ st.set_page_config(page_title="Energy Production Predictor", page_icon="⚡")
 st.title("⚡ Energy Production Predictor")
 st.write("Select a source and a date/time to estimate energy production output.")
 
-if st.button("Clear cache"):
-    st.cache_data.clear()
-    st.cache_resource.clear()
-    st.success("Cache cleared. Rerun the app now.")
-    st.stop()
-
-
 # -----------------------------
 # Load model
 # -----------------------------
@@ -31,14 +24,10 @@ model = load_model()
 @st.cache_data
 def load_lookup():
     lk = pd.read_parquet("feature_lookup.parquet")
-    lookup["Date"] = pd.to_datetime(lookup["Date"]).dt.date
+    lk["Date"] = pd.to_datetime(lk["Date"]).dt.date
     return lk
 
 lookup = load_lookup()
-st.write("Lookup columns:", list(lookup.columns))
-st.write("Lookup dtypes:", lookup.dtypes)
-st.write("Lookup sample:", lookup.head())
-
 sources = sorted(lookup["Source"].dropna().unique().tolist())
 
 # Optional: if you included Production in parquet, we can compute typical estimates from it
