@@ -157,8 +157,6 @@ def make_input_row(user_source, user_date, user_hour):
 # -----------------------------
 # Input card
 # -----------------------------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
-
 col1, col2 = st.columns(2)
 
 with col1:
@@ -199,4 +197,3 @@ if st.button("⚡ Predict Energy Output", use_container_width=True):
         st.error("Prediction failed.")
         st.write(str(e))
         
-st.markdown("</div>", unsafe_allow_html=True)
