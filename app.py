@@ -43,7 +43,10 @@ st.markdown("""
 # Header
 # -----------------------------
 st.markdown("## ⚡ Energy Production Predictor")
-st.caption("Select a source and a date/time to estimate energy production output.")
+st.markdown(
+    "<p class='subtle'>Select a source and a date/time to estimate energy production output.</p>",
+    unsafe_allow_html=True
+)
 
 # -----------------------------
 # Load model
@@ -195,3 +198,5 @@ if st.button("⚡ Predict Energy Output", use_container_width=True):
     except Exception as e:
         st.error("Prediction failed.")
         st.write(str(e))
+        
+st.markdown("</div>", unsafe_allow_html=True)
