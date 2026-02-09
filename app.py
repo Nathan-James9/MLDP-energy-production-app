@@ -43,10 +43,7 @@ st.markdown("""
 # Header
 # -----------------------------
 st.markdown("## ⚡ Energy Production Predictor")
-st.markdown(
-    "<p class='subtle'>Select a source and a date/time to estimate energy production output.</p>",
-    unsafe_allow_html=True
-)
+st.caption("Select a source and a date/time to estimate energy production output.")
 
 # -----------------------------
 # Load model
@@ -171,11 +168,12 @@ user_date = st.date_input("Date", value=date(2025, 1, 1))
 
 min_date = lookup["Date"].min()
 max_date = lookup["Date"].max()
-st.caption(f"Dataset coverage (historical mode): {min_date} → {max_date}")
 
-st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("---")
+st.markdown(
+    f"<small style='color:#9aa0a6;'>Dataset coverage (historical mode): {min_date} to {max_date}</small>",
+    unsafe_allow_html=True
+)
+st.markdown("<hr style='margin-top:0.5rem; margin-bottom:1.5rem;'>", unsafe_allow_html=True)
 
 # -----------------------------
 # Prediction
