@@ -1,13 +1,52 @@
+from datetime import date
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-from datetime import date
 
-st.set_page_config(page_title="Energy Production Predictor", page_icon="⚡")
+# -----------------------------
+# Page config
+# -----------------------------
+st.set_page_config(
+    page_title="Energy Production Predictor",
+    page_icon="⚡",
+    layout="centered"
+)
 
-st.title("⚡ Energy Production Predictor")
-st.write("Select a source and a date/time to estimate energy production output.")
+# -----------------------------
+# Light custom styling
+# -----------------------------
+st.markdown("""
+<style>
+.main {
+    background-color: #0f1117;
+}
+.card {
+    background-color: #1a1d24;
+    padding: 1.5rem;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+}
+.big-result {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #00e0a4;
+}
+.subtle {
+    color: #9aa0aa;
+    font-size: 0.9rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# Header
+# -----------------------------
+st.markdown("## ⚡ Energy Production Predictor")
+st.markdown(
+    "<p class='subtle'>Select a source and a date/time to estimate energy production output.</p>",
+    unsafe_allow_html=True
+)
 
 # -----------------------------
 # Load model
@@ -19,7 +58,7 @@ def load_model():
 model = load_model()
 
 # -----------------------------
-# Load feature lookup table (precomputed engineered features)
+# Load lookup table
 # -----------------------------
 @st.cache_data
 def load_lookup():
@@ -28,13 +67,11 @@ def load_lookup():
     return lk
 
 lookup = load_lookup()
-
 sources = sorted(lookup["Source"].dropna().unique().tolist())
-
 HAS_PROD = "Production" in lookup.columns
 
 # -----------------------------
-# Helper functions
+# Helper functions (unchanged)
 # -----------------------------
 def cyclical_hour_features(h):
     rad = 2 * np.pi * (h / 24)
@@ -45,11 +82,6 @@ def cyclical_doy_features(doy):
     return np.sin(rad), np.cos(rad)
 
 def build_typical_lag_estimates_from_lookup(lk, source, month_num, start_hour):
-    """
-    Build typical lag/rolling estimates from historical patterns in lookup.
-    Uses median (robust).
-    Requires Production to be present in the lookup table.
-    """
     temp = lk.copy()
     temp["Month_Num_from_Date"] = pd.to_datetime(temp["Date"]).dt.month
 
@@ -57,11 +89,8 @@ def build_typical_lag_estimates_from_lookup(lk, source, month_num, start_hour):
     if sub.empty:
         sub = temp[temp["Source"] == source]
 
-    # Typical production for hour
     same_hour = sub[sub["Start_Hour"] == start_hour]["Production"]
-    if same_hour.empty:
-        same_hour = sub["Production"]
-    typical_now = float(same_hour.median())
+    typical_now = float(same_hour.median()) if not same_hour.empty else float(sub["Production"].median())
 
     prev_hour = (start_hour - 1) % 24
     prev_vals = sub[sub["Start_Hour"] == prev_hour]["Production"]
@@ -88,7 +117,6 @@ def make_input_row(user_source, user_date, user_hour):
     hour_sin, hour_cos = cyclical_hour_features(user_hour)
     doy_sin, doy_cos = cyclical_doy_features(doy)
 
-    # Try exact lookup match first
     match = lookup[
         (lookup["Source"] == user_source) &
         (lookup["Date"] == user_date) &
@@ -104,14 +132,14 @@ def make_input_row(user_source, user_date, user_hour):
             "Prod_roll24": float(row["Prod_roll24"]),
             "Prod_roll24_std": float(row.get("Prod_roll24_std", 0.0))
         }
-        used_mode = "Historical prediction (exact lag features from dataset)"
+        used_mode = "Historical prediction (Exact lag features from data)"
     else:
         if not HAS_PROD:
-            raise ValueError("Planning mode needs Production in feature_lookup.parquet. Re-generate parquet including Production.")
+            raise ValueError("Planning mode needs Production in feature_lookup.parquet.")
         lag_feats = build_typical_lag_estimates_from_lookup(
             lookup, user_source, user_date.month, user_hour
         )
-        used_mode = "Planning estimate (typical historical patterns)"
+        used_mode = "Planning estimate (based on typical historical patterns)"
 
     input_dict = {
         "Source": user_source,
@@ -127,31 +155,45 @@ def make_input_row(user_source, user_date, user_hour):
     return pd.DataFrame([input_dict]), used_mode
 
 # -----------------------------
-# UI Inputs
+# Input card
 # -----------------------------
-source = st.selectbox("Source", sources)
-user_date = st.date_input("Date", value=date(2025, 1, 1))
-start_hour = st.number_input("Start Hour (0–23)", min_value=0, max_value=23, value=12)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-# Show dataset coverage info (nice for user confidence)
+col1, col2 = st.columns(2)
+
+with col1:
+    source = st.selectbox("Energy Source", sources)
+
+with col2:
+    start_hour = st.number_input("Start Hour (0–23)", 0, 23, 12)
+
+user_date = st.date_input("Date", value=date(2025, 1, 1))
+
 min_date = lookup["Date"].min()
 max_date = lookup["Date"].max()
-st.caption(f"Dataset coverage (for historical mode): {min_date} to {max_date}")
+st.caption(f"Dataset coverage (historical mode): {min_date} → {max_date}")
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # -----------------------------
-# Predict
+# Prediction
 # -----------------------------
-if st.button("Predict"):
+if st.button("⚡ Predict Energy Output", use_container_width=True):
     try:
         input_df, mode_used = make_input_row(source, user_date, start_hour)
         pred = model.predict(input_df)[0]
 
-        st.success(f"Predicted Production: {pred:,.2f}")
+        st.markdown(
+            f"<div class='big-result'>{pred:,.2f}</div>",
+            unsafe_allow_html=True
+        )
         st.caption(f"Mode used: {mode_used}")
 
-        if "Planning estimate" in mode_used:
-            st.info("This is an estimate based on typical historical patterns (useful for planning future dates).")
+        if "Planning" in mode_used:
+            st.info("Estimate based on typical historical patterns — ideal for future planning.")
 
     except Exception as e:
         st.error("Prediction failed.")
-        st.write("Error:", str(e))
+        st.write(str(e))
