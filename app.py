@@ -45,7 +45,6 @@ st.markdown("""
 st.markdown("## ⚡ Energy Production Predictor")
 st.markdown(
     "<p class='subtle'>Select a source and a date/time to estimate energy production output.</p>",
-    unsafe_allow_html=True
 )
 
 # -----------------------------
@@ -157,7 +156,6 @@ def make_input_row(user_source, user_date, user_hour):
 # -----------------------------
 # Input card
 # -----------------------------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
@@ -173,7 +171,6 @@ min_date = lookup["Date"].min()
 max_date = lookup["Date"].max()
 st.caption(f"Dataset coverage (historical mode): {min_date} → {max_date}")
 
-st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
